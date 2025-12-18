@@ -41,6 +41,67 @@
             </div>
         </form>
     </section>
+    {{-- FORM INPUT RESPONDEN --}}
+    <section class="mb-6 rounded-2xl bg-white border border-slate-200 p-4 md:p-5">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Tambah Responden Baru</h2>
+        <form action="{{ route('operator.data-responden.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @csrf
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama</label>
+                <input type="text" name="nama" class="w-full rounded-xl border-slate-300 text-sm" required>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">No. WA</label>
+                <input type="text" name="no_wa" class="w-full rounded-xl border-slate-300 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Gender</label>
+                <select name="gender" class="w-full rounded-xl border-slate-300 text-sm">
+                    <option value="">-- Pilih --</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Usia</label>
+                <input type="number" name="usia" class="w-full rounded-xl border-slate-300 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Pendidikan</label>
+                <input type="text" name="pendidikan" class="w-full rounded-xl border-slate-300 text-sm">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Pekerjaan</label>
+                <input type="text" name="pekerjaan" class="w-full rounded-xl border-slate-300 text-sm">
+            </div>
+
+            {{-- Input unsur u1..u9 --}}
+            @for($i=1; $i<=9; $i++)
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">U{{ $i }}</label>
+                    <select name="u{{ $i }}" class="w-full rounded-xl border-slate-300 text-sm" required>
+                        <option value="">-- Pilih --</option>
+                        <option value="1">1 - Sangat Tidak Puas</option>
+                        <option value="2">2 - Tidak Puas</option>
+                        <option value="3">3 - Puas</option>
+                        <option value="4">4 - Sangat Puas</option>
+                    </select>
+                </div>
+            @endfor
+
+            <div class="md:col-span-2">
+                <button type="submit" class="px-4 py-2.5 rounded-2xl bg-[#0B5394] text-white text-sm font-semibold hover:opacity-95">
+                    Simpan Responden
+                </button>
+            </div>
+        </form>
+    </section>
 
     {{-- TABLE --}}
     <section class="rounded-2xl bg-white border border-slate-200 overflow-hidden">

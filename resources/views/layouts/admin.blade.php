@@ -72,6 +72,13 @@
                     <span class="h-2 w-2 rounded-full" style="background: {{ $isActive('admin.laporan_ikm') ? $brand : '#CBD5E1' }};"></span>
                     Laporan IKM
                 </a>
+
+                <a href="{{ route('admin.arsip.index') }}"
+                class="flex items-center gap-3 px-4 py-3 rounded-2xl {{ $item($isActive('admin.arsip.index')) }}">
+                    <span class="h-2 w-2 rounded-full"
+                        style="background: {{ $isActive('admin.arsip.index') ? $brand : '#CBD5E1' }};"></span>
+                    Arsip Laporan
+                </a>
             </nav>
 
             <p class="text-[11px] font-semibold tracking-wider text-slate-400 mt-8">PENGATURAN</p>

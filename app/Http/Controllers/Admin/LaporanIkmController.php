@@ -8,6 +8,7 @@ use App\Models\LaporanIkm;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\LaporanIkmArsip;
 
 class LaporanIkmController extends Controller
 {
@@ -366,12 +367,98 @@ class LaporanIkmController extends Controller
     public function publish($id)
     {
         $laporan = LaporanIkm::findOrFail($id);
+
+        // Ambil semua responden sampai saat publish
+        $responden = SurveyResponse::where('opd_kode', $laporan->opd_kode)
+            ->where('completed', true)
+            ->get();
+
+        // Hitung distribusi responden
+        $gender     = $responden->groupBy('gender')->map->count();
+        $usia       = $responden->groupBy('usia_kategori')->map->count();
+        $pendidikan = $responden->groupBy('pendidikan')->map->count();
+        $pekerjaan  = $responden->groupBy('pekerjaan')->map->count();
+
+        // Hitung rata-rata unsur SKM
+        $avgUnsur = [
+            'u1' => $responden->avg('u1'),
+            'u2' => $responden->avg('u2'),
+            'u3' => $responden->avg('u3'),
+            'u4' => $responden->avg('u4'),
+            'u5' => $responden->avg('u5'),
+            'u6' => $responden->avg('u6'),
+            'u7' => $responden->avg('u7'),
+            'u8' => $responden->avg('u8'),
+            'u9' => $responden->avg('u9'),
+        ];
+
+        $nilaiIndeks = collect($avgUnsur)->avg();
+        $ikm         = round($nilaiIndeks * 25, 2);
+
+        // Tentukan mutu pelayanan
+        $mutu = 'D';
+        if ($ikm >= 88.31) $mutu = 'A';
+        elseif ($ikm >= 76.61) $mutu = 'B';
+        elseif ($ikm >= 65.00) $mutu = 'C';
+
+        // Simpan arsip snapshot lengkap
+        LaporanIkmArsip::create([
+            'opd_kode'        => $laporan->opd_kode,
+            'nilai_ikm'       => $ikm,
+            'total_responden' => $responden->count(),
+            'detail_gender'   => json_encode($gender),
+            'detail_usia'     => json_encode($usia),
+            'detail_pendidikan'=> json_encode($pendidikan),
+            'detail_pekerjaan'=> json_encode($pekerjaan),
+            'detail_unsur'    => json_encode($avgUnsur),
+            'mutu'            => $mutu,
+            'published_at'    => now(),
+        ]);
+
+        // Update status laporan jadi published
         $laporan->update([
-            'status' => 'published',
-            'published_by_admin' => Auth::id(),
-            'published_at' => now(),
+            'status'            => 'published',
+            'published_by_admin'=> Auth::id(),
+            'published_at'      => now(),
         ]);
 
         return redirect()->back()->with('success', 'Laporan berhasil dipublikasikan.');
+    }
+
+    public function detailArsip($id)
+    {
+        $laporan = LaporanIkmArsip::findOrFail($id);
+
+        // Snapshot distribusi responden & unsur dari arsip
+        $gender     = json_decode($laporan->detail_gender, true) ?? [];
+        $usia       = json_decode($laporan->detail_usia, true) ?? [];
+        $pendidikan = json_decode($laporan->detail_pendidikan, true) ?? [];
+        $pekerjaan  = json_decode($laporan->detail_pekerjaan, true) ?? [];
+        $avgUnsur   = json_decode($laporan->detail_unsur, true) ?? [];
+
+        // Total responden dari arsip (fallback ke jumlah elemen jika kolom belum ada)
+        $totalResponden = $laporan->total_responden
+            ?? array_sum(array_values($gender))
+            ?? 0;
+
+        // Hitung indeks dan IKM dari snapshot
+        $nilaiIndeks = collect($avgUnsur)->avg();
+        $ikm         = $laporan->nilai_ikm;
+        $mutu        = $laporan->mutu ?? (
+            $ikm >= 88.31 ? 'A' : ($ikm >= 76.61 ? 'B' : ($ikm >= 65.00 ? 'C' : 'D'))
+        );
+
+        return view('admin.laporan-detail-arsip', compact(
+            'laporan',
+            'gender',
+            'usia',
+            'pendidikan',
+            'pekerjaan',
+            'avgUnsur',
+            'nilaiIndeks',
+            'ikm',
+            'mutu',
+            'totalResponden'
+        ));
     }
 }

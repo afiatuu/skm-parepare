@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\DinasLayananController;
 use App\Http\Controllers\Admin\PertanyaanSkmController;
 use App\Http\Controllers\Admin\HasilSurveiController;
 use App\Http\Controllers\Admin\LaporanIkmController;
+use App\Http\Controllers\Admin\ArsipController;
 
 use App\Http\Controllers\Operator\OperatorDashboardController;
 use App\Http\Controllers\Kepala\KepalaApprovalController;
@@ -154,6 +155,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/laporan-ikm/{id}/kirim', [LaporanIkmController::class, 'sendToApproval'])->name('laporan_ikm.kirim');
             Route::post('/laporan-ikm/{id}/approve', [LaporanIkmController::class, 'approve'])->name('laporan_ikm.approve');
             Route::post('/laporan-ikm/{id}/publish', [LaporanIkmController::class, 'publish'])->name('laporan_ikm.publish');
+
+            //route arsip laporan
+            Route::get('/arsip', [ArsipController::class, 'index'])->name('arsip.index');
+            Route::get('/arsip/{id}', [LaporanIkmController::class, 'detailArsip'])->name('laporan_ikm.detailArsip');
+
         });
 
     // ================== OPERATOR OPD ROUTES =====================
@@ -161,6 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/operator', [OperatorDashboardController::class, 'index'])->name('operator.dashboard');
         Route::get('/operator/data-responden', [OperatorDashboardController::class, 'dataResponden'])->name('operator.data-responden');
         Route::get('/operator/laporan-ikm', [OperatorDashboardController::class, 'laporanIkm'])->name('operator.laporan-ikm');
+        Route::post('/operator/data-responden', [OperatorDashboardController::class, 'storeResponden']) ->name('operator.data-responden.store');
         });
 
     // ================== KEPALA OPD ROUTES =====================
@@ -173,6 +180,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ================== PUBLIKASI =====================
 Route::get('/', [PublikasiController::class, 'home'])->name('home');
 Route::get('/publikasi', [PublikasiController::class, 'index'])->name('publikasi.laporan');
-Route::get('/publikasi/{id}', [PublikasiController::class, 'detail'])->name('publikasi.detail'); // detail publikasi
+Route::get('/publikasi/detail/{opd_kode}', [PublikasiController::class, 'detail'])->name('publikasi.detail');
 
 require __DIR__ . '/auth.php';

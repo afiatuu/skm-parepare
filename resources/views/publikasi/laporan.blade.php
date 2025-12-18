@@ -97,7 +97,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-2 text-center align-top">
-                                    <a href="{{ $row['detail_url'] }}"
+                                    <a href="{{ $row['url'] }}"
                                     class="text-[11px] text-[#002B6B] font-semibold hover:underline inline-flex items-center gap-1">
                                         Publikasi
                                         <span>➜</span>

@@ -190,42 +190,8 @@
             </tr>
         </tbody>
     </table>
-    {{-- Tombol aksi --}}
-    <div class="mt-6 flex gap-2">
-        @if($laporan)
-            <a href="{{ route('admin.laporan_ikm.exportDetailPdf', $laporan->opd_kode) }}"
-            class="h-10 px-4 rounded-md text-white bg-red-600 hover:bg-red-700 text-sm font-semibold flex items-center justify-center">
-                Export PDF
-            </a>
-            <a href="{{ route('admin.laporan_ikm.exportDetailExcel', $laporan->opd_kode) }}"
-            class="h-10 px-4 rounded-md text-white bg-green-600 hover:bg-green-700 text-sm font-semibold flex items-center justify-center">
-                Export Excel
-            </a>
-            <form action="{{ route('admin.laporan_ikm.kirim', $laporan->id) }}" method="POST">
-                @csrf
-                <button type="submit"
-                        class="h-10 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 text-sm font-semibold flex items-center justify-center">
-                    Kirim ke Kepala
-                </button>
-            </form>
 
-            {{-- Tombol publikasi muncul hanya jika status approved --}}
-            @if($laporan->status === 'approved')
-                <form action="{{ route('admin.laporan_ikm.publish', $laporan->id) }}" method="POST">
-                    @csrf
-                    <button type="submit"
-                            class="h-10 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 text-sm font-semibold flex items-center justify-center">
-                        Publikasikan
-                    </button>
-                </form>
-            @endif
-        @endif
-
-        <a href="{{ route('admin.laporan_ikm') }}"
-        class="h-10 px-4 rounded-md text-slate-700 bg-slate-200 hover:bg-slate-300 text-sm font-semibold flex items-center justify-center">
-            Kembali
-        </a>
-    </div>
+ c
 
 </div>
 @endsection

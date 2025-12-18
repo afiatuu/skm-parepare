@@ -11,29 +11,60 @@ class PublikasiController extends Controller
 {
     public function index()
     {
-        $laporanPublished = LaporanIkm::where('status', 'published')->with('opd')->get();
+        // Ambil laporan terbaru per OPD
+        $laporanPublished = Opd::all()->map(function ($opd) {
+            return LaporanIkm::where('opd_kode', $opd->kode)
+                ->where('status', 'published')
+                ->with('opd')
+                ->latest('published_at')   // ambil yang paling baru
+                ->first();
+        })->filter(); // buang null kalau ada OPD tanpa laporan
 
-        $opdList = $laporanPublished->map(function ($laporan, $index) {
-            $ikm = $laporan->nilai_ikm ?? 0;
+        // Format data untuk view
+        $opdList = $laporanPublished->values()->map(function ($laporan, $index) {
+            // Ambil responden terbaru untuk OPD ini
+            $responden = $laporan->responden()->where('completed', true)->get();
+
+            // Hitung rata-rata unsur u1..u9
+            $avgUnsur = [
+                'u1' => round($responden->avg('u1'), 2),
+                'u2' => round($responden->avg('u2'), 2),
+                'u3' => round($responden->avg('u3'), 2),
+                'u4' => round($responden->avg('u4'), 2),
+                'u5' => round($responden->avg('u5'), 2),
+                'u6' => round($responden->avg('u6'), 2),
+                'u7' => round($responden->avg('u7'), 2),
+                'u8' => round($responden->avg('u8'), 2),
+                'u9' => round($responden->avg('u9'), 2),
+            ];
+
+            $nilaiIndeks = collect($avgUnsur)->avg() ?? 0;
+            $ikm = round($nilaiIndeks * 25, 2);
+
+            // Tentukan rating bintang
             $stars = $ikm >= 85 ? 5 : ($ikm >= 75 ? 4 : ($ikm >= 65 ? 3 : ($ikm >= 50 ? 2 : 1)));
 
             return [
                 'no'         => $index + 1,
                 'opd_nama'   => $laporan->opd->nama ?? 'OPD Tidak Dikenal',
                 'ikm'        => $ikm,
-                'responden'  => $laporan->responden()->count(),
+                'responden'  => $responden->count(),
                 'stars'      => $stars,
-                'detail_url' => route('publikasi.detail', $laporan->id),
+                'url'        => route('publikasi.detail', $laporan->opd_kode),
             ];
         });
 
         return view('publikasi.laporan', compact('opdList'));
     }
 
-    public function detail($id)
+    public function detail($opd_kode)
     {
         // Ambil laporan yang sudah dipublikasikan + relasi OPD
-        $laporan = LaporanIkm::with('opd')->where('id', $id)->where('status', 'published')->firstOrFail();
+        $laporan = LaporanIkm::with('opd')
+        ->where('opd_kode', $opd_kode)
+        ->where('status', 'published')
+        ->orderBy('published_at', 'desc')
+        ->firstOrFail();
 
         // Tentukan nama OPD dengan fallback aman
         $opdNama = $laporan->opd->nama ?? $laporan->opd_nama ?? $laporan->opd_kode;
@@ -104,9 +135,10 @@ class PublikasiController extends Controller
     {
         $laporanPublished = LaporanIkm::where('status', 'published')
             ->with('opd')
-            ->orderBy('approved_at', 'desc') // urutkan berdasarkan waktu publish
-            ->take(3)                        // ambil hanya 3 data
-            ->get();
+            ->orderBy('published_at', 'desc')                          
+            ->get()
+            ->unique('opd_kode')
+            ->take(3);
 
         $cards = $laporanPublished->map(function ($laporan) {
             $ikm = $laporan->nilai_ikm ?? null;
@@ -117,7 +149,7 @@ class PublikasiController extends Controller
                 'sub'  => $laporan->judul ?? 'Laporan IKM',
                 'ikm'  => $ikm ? number_format($ikm, 2) : '–',
                 'stars'=> $stars,
-                'url'  => route('publikasi.laporan'), // arahkan ke halaman rekap semua publikasi
+                'url'  => route('publikasi.laporan'),
             ];
         });
 

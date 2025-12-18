@@ -39,14 +39,16 @@
                             <span class="badge bg-success">Disetujui</span>
                         @elseif($row->status == 'published')
                             <span class="badge bg-primary">Dipublikasikan</span>
+                        @elseif($row->status == 'needs_verification')
+                            <span class="badge bg-warning text-dark">Perlu Verifikasi</span>    
                         @endif
                     </td>
                     <td>
                         {{-- Tombol aksi sesuai status dan role --}}
-                        @if($row->status == 'draft')
+                        @if($row->status == 'draft' || $row->status == 'needs_verification')
                             <form action="{{ route('admin.laporan_ikm.kirim', $row->id) }}" method="POST" style="display:inline;">
                                 @csrf
-                                <button type="submit" class="btn btn-warning btn-sm">Kirim</button>
+                                <button type="submit" class="btn btn-warning btn-sm">Kirim ke Kepala OPD</button>
                             </form>
                         @elseif($row->status == 'waiting_approval' && Auth::user()->role == 'kepala')
                             <form action="{{ route('admin.laporan_ikm.approve', $row->id) }}" method="POST" style="display:inline;">

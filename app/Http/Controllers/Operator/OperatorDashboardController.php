@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SurveyResponse;
+use App\Models\LaporanIkm;
 use Carbon\Carbon;
 
 class OperatorDashboardController extends Controller
@@ -97,6 +98,50 @@ class OperatorDashboardController extends Controller
         ));
     }
 
+    // ================== SIMPAN RESPONDEN ==================
+    public function storeResponden(Request $request)
+    {
+        $user = Auth::user();
+        $opdKode = $user->opd_kode;
+
+        if (!$opdKode) {
+            abort(403, 'OPD user belum di-set.');
+        }
+
+        // Validasi input responden
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'no_wa' => 'nullable|string|max:20',
+            'gender' => 'nullable|string|max:10',
+            'usia' => 'nullable|integer',
+            'pendidikan' => 'nullable|string|max:50',
+            'pekerjaan' => 'nullable|string|max:50',
+            'opd_kode' => 'required|string',
+            'u1' => 'required|integer|min:1|max:4',
+            'u2' => 'required|integer|min:1|max:4',
+            'u3' => 'required|integer|min:1|max:4',
+            'u4' => 'required|integer|min:1|max:4',
+            'u5' => 'required|integer|min:1|max:4',
+            'u6' => 'required|integer|min:1|max:4',
+            'u7' => 'required|integer|min:1|max:4',
+            'u8' => 'required|integer|min:1|max:4',
+            'u9' => 'required|integer|min:1|max:4',
+        ]);
+
+        // Simpan responden baru
+        $responden = SurveyResponse::create($validated);
+
+        // Cari laporan IKM terbaru untuk OPD terkait
+        $laporan = LaporanIkm::where('opd_kode', $responden->opd_kode)->latest()->first();
+
+        // Kalau status laporan masih published, ubah jadi needs_verification
+        if ($laporan && $laporan->status === 'published') {
+            $laporan->update(['status' => 'needs_verification']);
+        }
+
+        return redirect()->route('operator.data-responden')->with('success', 'Responden berhasil ditambahkan');
+    }
+
     // ================== LAPORAN IKM ==================
     public function laporanIkm()
     {
@@ -127,7 +172,7 @@ class OperatorDashboardController extends Controller
             ')
             ->first();
 
-        $unsurData = collect(); // gunakan Collection
+        $unsurData = collect();
         $sumIkm = 0;
         $countIkm = 0;
 
@@ -151,7 +196,6 @@ class OperatorDashboardController extends Controller
         $ikmRata = $countIkm ? round($sumIkm / $countIkm, 2) : 0;
         $totalResponden = SurveyResponse::where('opd_kode', $opdKode)->count();
 
-        // Data tren per bulan
         $trendData = SurveyResponse::selectRaw('MONTH(created_at) as bulan, AVG((u1+u2+u3+u4+u5+u6+u7+u8+u9)/9)*25 as ikm')
             ->where('opd_kode', $opdKode)
             ->groupBy('bulan')
