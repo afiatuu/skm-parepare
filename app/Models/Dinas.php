@@ -15,6 +15,11 @@ class Dinas extends Model
 
     public function services(): HasMany
     {
-        return $this->hasMany(Service::class, 'opd_id');
+        return $this->hasMany(Service::class, 'dinas_id');
+    }
+
+    public function opd()
+    {
+        return $this->belongsTo(Opd::class, 'kode', 'kode');
     }
 }

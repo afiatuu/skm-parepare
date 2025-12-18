@@ -1,4 +1,5 @@
 <?php
+// app\Http\Controllers\Admin\DinasLayananController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -68,7 +69,7 @@ class DinasLayananController extends Controller
     public function storeLayanan(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'opd_id' => ['required','exists:dinas,id'],
+            'dinas_id' => ['required','exists:dinas,id'],
             'nama' => ['required','string','max:255'],
         ]);
 

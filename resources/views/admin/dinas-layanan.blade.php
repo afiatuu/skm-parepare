@@ -82,18 +82,18 @@
 
                 <div>
                     <label class="text-xs text-slate-500">Pilih OPD</label>
-                    <select name="opd_id"
+                    <select name="dinas_id"
                             class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-[#0B5394]/30">
                         <option value="">-- pilih OPD --</option>
 
                         @foreach($allDinas as $d)
-                            <option value="{{ $d->id }}" @selected(old('opd_id') == $d->id)>
+                            <option value="{{ $d->id }}" @selected(old('dinas_id') == $d->id)>
                                 {{ $d->nama }} ({{ $d->kode }})
                             </option>
                         @endforeach
                     </select>
 
-                    @error('opd_id')
+                    @error('dinas_id')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
