@@ -1,4 +1,5 @@
 <?php
+// app\Http\Controllers\SurveyController.php
 
 namespace App\Http\Controllers;
 
@@ -141,7 +142,7 @@ class SurveyController extends Controller
 
         // dropdown layanan di step 1 (ambil dari tabel services)
         $layananOptions = Service::query()
-            ->where('opd_id', $dinasId)
+            ->where('dinas_id', $dinasId)
             ->orderBy('nama')
             ->get(['id', 'nama']);
 
@@ -172,7 +173,7 @@ class SurveyController extends Controller
 
         $service = Service::query()
             ->where('id', $validated['service_id'])
-            ->where('opd_id', $dinas->id)
+            ->where('dinas_id', $dinas->id)
             ->firstOrFail();
 
         // simpan ke session

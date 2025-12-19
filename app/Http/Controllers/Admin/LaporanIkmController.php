@@ -19,6 +19,7 @@ class LaporanIkmController extends Controller
             (AVG((u1+u2+u3+u4+u5+u6+u7+u8+u9)/9)) as rata_ni,
             COUNT(*) as jumlah_responden')
             ->where('completed', true)
+            ->whereNotNull('opd_kode') 
             ->groupBy('opd_kode', 'opd_nama')
             ->orderByDesc('rata_ni')
             ->get();

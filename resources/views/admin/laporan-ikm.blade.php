@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+{{-- resources\views\admin\laporan-ikm.blade.php --}}
 
 @section('title', 'Laporan IKM')
 
