@@ -1,4 +1,5 @@
 <?php
+// app\Models\Opd.php
 
 namespace App\Models;
 
@@ -9,22 +10,35 @@ class Opd extends Model
 {
     use HasFactory;
 
-    protected $table = 'opd'; 
+    protected $table = 'opd';
 
-    protected $primaryKey = 'kode'; 
-
-    public $incrementing = false; 
-
+    protected $primaryKey = 'kode';
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
         'kode',
         'nama',
+        'category_id', // 🔥 WAJIB
     ];
 
-    // Relasi ke laporan IKM
+    // =====================
+    // RELATIONS
+    // =====================
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class, 'kode_opd', 'kode');
+    }
+
+    // (opsional, kalau memang ada)
     public function laporan()
     {
-        return $this->hasMany(LaporanIkm::class, 'opd_kode', 'kode');
+        return $this->hasMany(LaporanIkm::class, 'kode_opd', 'kode');
     }
 }

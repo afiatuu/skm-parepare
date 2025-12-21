@@ -34,7 +34,8 @@ Route::post('/survey/opd', [SurveyController::class, 'opdSelectPost'])->name('su
 Route::get('/survey/opd/kategori/{kategori}', [SurveyController::class, 'opdByKategori'])->name('survey.opd.byKategori');
 Route::post('/survey/opd/kategori/{kategori}', [SurveyController::class, 'opdByKategoriPost'])->name('survey.opd.byKategori.post');
 
-Route::get('/survey/opd/{dinasId}', [SurveyController::class, 'opdDetail'])->name('survey.opd.detail');
+// PERBAIKAN 1: Ganti parameter {dinasId} menjadi {opd} atau {kode}
+Route::get('/survey/opd/{opd}', [SurveyController::class, 'opdDetail'])->name('survey.opd.detail');
 
 // ================== ROUTE SURVEY (STEP 1–17) =====================
 Route::get('/survey/step-1', [SurveyController::class, 'step1'])->name('survey.step1');
@@ -123,9 +124,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/profil', [\App\Http\Controllers\Admin\ProfilController::class, 'update'])->name('profil.update');
 
             Route::get('/dinas-layanan', [DinasLayananController::class, 'index'])->name('dinas_layanan');
-            Route::post('/dinas', [DinasLayananController::class, 'storeDinas'])->name('dinas.store');
-            Route::put('/dinas/{dinas}', [DinasLayananController::class, 'updateDinas'])->name('dinas.update');
-            Route::delete('/dinas/{dinas}', [DinasLayananController::class, 'destroyDinas'])->name('dinas.destroy');
+            
+            // PERBAIKAN 2: Sesuaikan dengan nama method yang benar di controller
+            Route::post('/dinas', [DinasLayananController::class, 'storeOpd'])->name('dinas.store');
+            
+            // PERBAIKAN 3: Ganti parameter {dinas} menjadi {opd} untuk Route Model Binding
+            Route::put('/dinas/{opd}', [DinasLayananController::class, 'updateOpd'])->name('dinas.update');
+            Route::delete('/dinas/{opd}', [DinasLayananController::class, 'destroyOpd'])->name('dinas.destroy');
+            
             Route::post('/layanan', [DinasLayananController::class, 'storeLayanan'])->name('layanan.store');
             Route::put('/layanan/{service}', [DinasLayananController::class, 'updateLayanan'])->name('layanan.update');
             Route::delete('/layanan/{service}', [DinasLayananController::class, 'destroyLayanan'])->name('layanan.destroy');

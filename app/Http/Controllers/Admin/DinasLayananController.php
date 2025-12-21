@@ -1,10 +1,10 @@
 <?php
-// app\Http\Controllers\Admin\DinasLayananController.php
+// app/Http\Controllers/Admin/DinasLayananController.php
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dinas;
+use App\Models\Opd;
 use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,75 +13,108 @@ use Illuminate\View\View;
 
 class DinasLayananController extends Controller
 {
+    /**
+     * LIST OPD & LAYANAN
+     */
     public function index(Request $request): View
     {
         $q = trim((string) $request->query('q'));
 
-        $dinas = Dinas::query()
-            ->with(['services' => fn($s) => $s->orderBy('nama')])
+        $opds = Opd::query()
+            ->with(['services' => fn ($s) => $s->orderBy('nama')])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where('nama', 'like', "%{$q}%")
-                      ->orWhere('kode', 'like', "%{$q}%")
-                      ->orWhereHas('services', fn($s) => $s->where('nama', 'like', "%{$q}%"));
+                    ->orWhere('kode', 'like', "%{$q}%")
+                    ->orWhereHas('services', fn ($s) =>
+                        $s->where('nama', 'like', "%{$q}%")
+                    );
             })
             ->orderBy('nama')
-            ->paginate(1)
+            ->paginate(10)
             ->withQueryString();
 
-        $allDinas = Dinas::orderBy('nama')->get(['id','nama','kode']);
-        return view('admin.dinas-layanan', compact('dinas', 'q', 'allDinas'));
+        // PERBAIKAN 1: HAPUS 'id' dari SELECT karena tabel opd tidak punya kolom id
+        $allOpds = Opd::orderBy('nama')->get(['kode', 'nama', 'category_id']);
+
+        return view('admin.dinas-layanan', compact('opds', 'q', 'allOpds'));
     }
 
-    public function storeDinas(Request $request): RedirectResponse
+    /**
+     * SIMPAN OPD BARU
+     */
+    public function storeOpd(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'kode' => ['required','string','max:50', 'unique:dinas,kode'],
-            'nama' => ['required','string','max:255'],
-            'category_id' => ['nullable','integer'],
+            'kode'        => ['required', 'string', 'max:50', 'unique:opd,kode'],
+            'nama'        => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer'],
         ]);
 
-        Dinas::create($data);
+        Opd::create($data);
 
-        return back()->with('success', 'Dinas berhasil ditambahkan.');
+        return back()->with('success', 'OPD berhasil ditambahkan.');
     }
 
-    public function updateDinas(Request $request, Dinas $dinas): RedirectResponse
+    /**
+     * UPDATE OPD
+     */
+    public function updateOpd(Request $request, Opd $opd): RedirectResponse
     {
         $data = $request->validate([
-            'kode' => ['required','string','max:50', Rule::unique('dinas','kode')->ignore($dinas->id)],
-            'nama' => ['required','string','max:255'],
-            'category_id' => ['nullable','integer'],
+            'kode'        => [
+                'required',
+                'string',
+                'max:50',
+                // PERBAIKAN 2: Ganti $opd->id dengan $opd->kode
+                Rule::unique('opd', 'kode')->ignore($opd->kode, 'kode'),
+            ],
+            'nama'        => ['required', 'string', 'max:255'],
+            'category_id' => ['nullable', 'integer'],
         ]);
 
-        $dinas->update($data);
+        $opd->update($data);
 
-        return back()->with('success', 'Dinas berhasil diperbarui.');
+        return back()->with('success', 'OPD berhasil diperbarui.');
     }
 
-    public function destroyDinas(Dinas $dinas): RedirectResponse
+    /**
+     * HAPUS OPD & SEMUA LAYANANNYA
+     */
+    public function destroyOpd(Opd $opd): RedirectResponse
     {
-        $dinas->services()->delete();
-        $dinas->delete();
+        $opd->services()->delete();
+        $opd->delete();
 
-        return back()->with('success', 'Dinas berhasil dihapus.');
+        return back()->with('success', 'OPD berhasil dihapus.');
     }
 
+    /**
+     * SIMPAN LAYANAN
+     */
     public function storeLayanan(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'dinas_id' => ['required','exists:dinas,id'],
-            'nama' => ['required','string','max:255'],
+            // PERBAIKAN 3: Ganti 'opd_id' dengan 'kode_opd' dan 'exists:opd,id' dengan 'exists:opd,kode'
+            'kode_opd' => ['required', 'exists:opd,kode'],
+            'nama'     => ['required', 'string', 'max:255'],
         ]);
 
-        Service::create($data);
+        // PERBAIKAN 4: Field harus sesuai dengan nama di database (kode_opd)
+        Service::create([
+            'kode_opd' => $data['kode_opd'],
+            'nama'     => $data['nama']
+        ]);
 
         return back()->with('success', 'Layanan berhasil ditambahkan.');
     }
 
+    /**
+     * UPDATE LAYANAN
+     */
     public function updateLayanan(Request $request, Service $service): RedirectResponse
     {
         $data = $request->validate([
-            'nama' => ['required','string','max:255'],
+            'nama' => ['required', 'string', 'max:255'],
         ]);
 
         $service->update($data);
@@ -89,9 +122,13 @@ class DinasLayananController extends Controller
         return back()->with('success', 'Layanan berhasil diperbarui.');
     }
 
+    /**
+     * HAPUS LAYANAN
+     */
     public function destroyLayanan(Service $service): RedirectResponse
     {
         $service->delete();
+
         return back()->with('success', 'Layanan berhasil dihapus.');
     }
 }

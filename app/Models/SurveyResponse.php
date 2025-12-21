@@ -29,11 +29,6 @@ class SurveyResponse extends Model
         'approved_at'=>'datetime',
     ];
 
-    public function dinas()
-    {
-        return $this->belongsTo(Dinas::class, 'dinas_id');
-    }
-
     public function laporan()
     {
         return $this->belongsTo(LaporanIkm::class, 'opd_kode', 'opd_kode');

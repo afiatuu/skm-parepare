@@ -15,7 +15,7 @@ return new class extends Migration
             // =====================
             // Relasi
             // =====================
-            $table->unsignedBigInteger('dinas_id'); // unit / dinas
+            $table->string('kode_opd');
 
             // =====================
             // Atribut

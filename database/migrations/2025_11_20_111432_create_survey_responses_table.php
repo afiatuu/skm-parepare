@@ -29,7 +29,6 @@ return new class extends Migration
             // =====================
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('opd_id')->nullable();
-            $table->unsignedBigInteger('dinas_id')->nullable();
             $table->unsignedBigInteger('service_id')->nullable();
 
             // =====================

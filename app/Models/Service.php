@@ -1,5 +1,5 @@
 <?php
-// app\Models\Service.php
+// app/Models/Service.php
 
 namespace App\Models;
 
@@ -11,12 +11,12 @@ class Service extends Model
     protected $table = 'services';
 
     protected $fillable = [
-        'dinas_id',
+        'kode_opd',
         'nama'
     ];
 
-    public function dinas(): BelongsTo
+    public function opd(): BelongsTo
     {
-        return $this->belongsTo(Dinas::class, 'dinas_id');
-    }
+        return $this->belongsTo(Opd::class, 'kode_opd', 'kode');
+    }  
 }

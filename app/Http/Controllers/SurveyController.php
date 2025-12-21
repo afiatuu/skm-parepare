@@ -3,7 +3,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Dinas;
+use App\Models\Opd;
 use App\Models\Service;
 use App\Models\SurveyResponse;
 use Illuminate\Http\Request;
@@ -77,11 +77,13 @@ class SurveyController extends Controller
         };
 
         // ambil daftar dinas berdasarkan category_id
-        $opsi = Dinas::query()
+        $opsi = Opd::query()
             ->where('category_id', $categoryId)
             ->orderBy('nama')
-            ->get(['id', 'nama', 'kode'])
-            ->mapWithKeys(fn($d) => [$d->id => $d->nama . ' (' . $d->kode . ')'])
+            ->get(['kode','nama'])
+            ->mapWithKeys(fn($opd) => [
+                $opd->kode => $opd->nama . ' (' . $opd->kode . ')'
+            ])
             ->toArray();
 
         return view('survey.opd-by-kategori', compact('kategori', 'kategoriLabel', 'opsi'));
@@ -101,25 +103,20 @@ class SurveyController extends Controller
         };
 
         $request->validate([
-            'opd' => 'required|integer',
+            'opd' => 'required|string|exists:opd,kode',
         ]);
 
-        $dinas = Dinas::query()
-            ->where('id', $request->opd)
+        $opd = Opd::where('kode', $request->opd)
             ->where('category_id', $categoryId)
             ->firstOrFail();
 
         session([
-            'survey.category_id' => $categoryId,
-            'survey.opd_id'      => $dinas->id,
-            'survey.opd_kode'    => $dinas->kode,
-            'survey.opd_nama'    => $dinas->nama,
-
-            // reset pilihan layanan kalau ganti OPD
+            'survey.kode_opd'   => $opd->kode,
+            'survey.nama_opd'   => $opd->nama,
+            'survey.category_id'=> $categoryId,
+            
             'survey.service_id'  => null,
             'survey.layanan'     => null,
-
-            // reset respon kalau user ulang dari awal
             'survey.response_id' => null,
         ]);
 
@@ -129,7 +126,7 @@ class SurveyController extends Controller
     // ===================== STEP 1 =====================
     public function step1()
     {
-        if (!session('survey.opd_id')) {
+        if (!session('survey.kode_opd')) {
             return redirect()->route('survey.opd.select')
                 ->with('error', 'Silakan pilih OPD terlebih dahulu.');
         }
@@ -138,11 +135,11 @@ class SurveyController extends Controller
         $totalSteps      = $this->totalSteps;
         $progressPercent = ($currentStep / $totalSteps) * 100;
 
-        $dinasId = (int) session('survey.opd_id');
+        $kodeOpd = session('survey.kode_opd');
 
-        // dropdown layanan di step 1 (ambil dari tabel services)
+        // ✅ PERBAIKAN: Tidak perlu mengambil OPD, langsung filter dengan kode_opd
         $layananOptions = Service::query()
-            ->where('dinas_id', $dinasId)
+            ->where('kode_opd', $kodeOpd) // ✅ GANTI 'opd_id' dengan 'kode_opd'
             ->orderBy('nama')
             ->get(['id', 'nama']);
 
@@ -150,7 +147,7 @@ class SurveyController extends Controller
             'currentStep',
             'totalSteps',
             'progressPercent',
-            'layananOptions',
+            'layananOptions'
         ));
     }
 
@@ -159,21 +156,24 @@ class SurveyController extends Controller
         $validated = $request->validate([
             'nama'       => 'required|string|max:255',
             'no_wa'      => 'required|string|max:20',
-            'service_id' => 'required|integer',
+            'service_id' => 'required|exists:services,id',
         ]);
 
-        $dinasId    = session('survey.opd_id');
+        $kodeOpd   = session('survey.kode_opd');
+        $namaOpd   = session('survey.nama_opd');
         $categoryId = session('survey.category_id');
 
-        if (!$dinasId) {
+        if (!$kodeOpd) {
             abort(419, 'Session OPD tidak ditemukan. Silakan mulai dari awal.');
         }
 
-        $dinas = Dinas::findOrFail($dinasId);
+        // ambil OPD berdasarkan KODE
+        $opd = Opd::where('kode', $kodeOpd)->firstOrFail();
 
+        // ✅ PERBAIKAN: Filter dengan kode_opd bukan opd_id
         $service = Service::query()
             ->where('id', $validated['service_id'])
-            ->where('dinas_id', $dinas->id)
+            ->where('kode_opd', $kodeOpd) // ✅ GANTI 'opd_id' dengan 'kode_opd'
             ->firstOrFail();
 
         // simpan ke session
@@ -184,18 +184,17 @@ class SurveyController extends Controller
             'survey.layanan'    => $service->nama,
         ]);
 
-        // buat row survey_responses
+        // BUAT survey_responses (TANPA opd_id & dinas_id)
         $sr = SurveyResponse::create([
             'nama'         => $validated['nama'],
             'no_wa'        => $validated['no_wa'],
             'category_id'  => $categoryId,
 
-            'opd_kode'     => $dinas->kode,
-            'opd_nama'     => $dinas->nama,
-            'layanan_nama' => $service->nama,
+            'opd_kode'     => $opd->kode, // ✅ KONSISTEN: opd_kode bukan kode_opd
+            'opd_nama'     => $opd->nama,
 
-            'opd_id'     => $dinas->id,
             'service_id'   => $service->id,
+            'layanan_nama' => $service->nama,
         ]);
 
         session(['survey.response_id' => $sr->id]);
